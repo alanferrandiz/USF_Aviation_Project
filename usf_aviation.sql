@@ -1,3 +1,4 @@
+
 IF OBJECT_ID('tickets') IS NOT NULL DROP TABLE tickets;
 IF OBJECT_ID('locations') IS NOT NULL DROP TABLE locations;
 IF OBJECT_ID('customers') IS NOT NULL DROP TABLE customers;
@@ -22,6 +23,7 @@ IF OBJECT_ID('zipcodes') IS NOT NULL DROP TABLE zipcodes;
 IF OBJECT_ID('states') IS NOT NULL DROP TABLE states;
 
 
+ 
 
 
 go
@@ -268,32 +270,42 @@ go
 ALTER TABLE planes_maintenances ADD CONSTRAINT fk_planes_maintenances_planes FOREIGN KEY (plane_id) REFERENCES planes (plane_id);
 ALTER TABLE planes_maintenances ADD CONSTRAINT fk_planes_maintenances_maintenances FOREIGN KEY (maintenance_id) REFERENCES maintenances (maintenance_id);
 ALTER TABLE planes_maintenances ADD CONSTRAINT fk_planes_maintenances_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
+
 ALTER TABLE flights ADD CONSTRAINT fk_flights_routes FOREIGN KEY (route_id) REFERENCES routes (route_id);
+ALTER TABLE flights ADD CONSTRAINT fk_flights_planes FOREIGN KEY (plane_id) REFERENCES planes (plane_id);
+
 ALTER TABLE tickets ADD CONSTRAINT fk_tickets_customers FOREIGN KEY (customer_id) REFERENCES customers (customer_id);
 ALTER TABLE tickets ADD CONSTRAINT fk_tickets_flights FOREIGN KEY (flight_id) REFERENCES flights (flight_id);
 ALTER TABLE tickets ADD CONSTRAINT fk_tickets_locations FOREIGN KEY (purchase_location_id) REFERENCES locations (location_id);
 ALTER TABLE tickets ADD CONSTRAINT fk_tickets_cabin_types FOREIGN KEY (cabin_type_id) REFERENCES cabin_types(cabin_type_id);
-ALTER TABLE flights ADD CONSTRAINT fk_flights_planes FOREIGN KEY (plane_id) REFERENCES planes (plane_id);
 ALTER TABLE tickets ADD CONSTRAINT fk_tickets_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
-ALTER TABLE flights_employees ADD CONSTRAINT fk_flights_employees_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
-ALTER TABLE flights_employees ADD CONSTRAINT fk_flights_employees_flights FOREIGN KEY (flight_id) REFERENCES flights (flight_id);
-ALTER TABLE routes_cabin_types ADD CONSTRAINT fk_routes_cabin_type_routes FOREIGN KEY (route_id) REFERENCES routes (route_id);
-ALTER TABLE routes_cabin_types ADD CONSTRAINT fk_routes_cabin_type_cabin_types FOREIGN KEY (cabin_type_id) REFERENCES cabin_types (cabin_type_id);
 ALTER TABLE tickets ADD CONSTRAINT fk_discounts_tickets FOREIGN KEY (discount_id) REFERENCES discounts (discount_id);
-ALTER TABLE employees_job_positions ADD CONSTRAINT fk_employees_job_positions_job_positions FOREIGN KEY (job_position_id) REFERENCES job_positions (job_position_id);
-ALTER TABLE employees_job_positions ADD CONSTRAINT fk_employees_job_positions_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
-ALTER TABLE locations ADD CONSTRAINT fk_locations_location_types FOREIGN KEY (location_type_id) REFERENCES location_types (location_type_id);
-ALTER TABLE routes ADD CONSTRAINT fk_routes_cities_states_origin FOREIGN KEY (city_state_id_origin) REFERENCES cities_states (city_state_id);
-ALTER TABLE routes ADD CONSTRAINT fk_routes_cities_states_destination FOREIGN KEY (city_state_id_destination) REFERENCES cities_states (city_state_id);
-ALTER TABLE cities_states ADD CONSTRAINT fk_cities_states_states FOREIGN KEY (state_id) REFERENCES states (state_id);
-ALTER TABLE employees ADD CONSTRAINT fk_employees_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
-ALTER TABLE customers ADD CONSTRAINT fk_customers_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
-ALTER TABLE routes ADD CONSTRAINT fk_routes_weekdays FOREIGN KEY (weekday_id) REFERENCES weekdays (weekday_id);
-ALTER TABLE employees ADD CONSTRAINT fk_employees_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
-ALTER TABLE customers ADD CONSTRAINT fk_customers_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
-ALTER TABLE locations ADD CONSTRAINT fk_locations_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
-ALTER TABLE zipcodes ADD CONSTRAINT fk_zipcodes_states FOREIGN KEY (state_id) REFERENCES states (state_id);
-ALTER TABLE locations ADD CONSTRAINT fk_locations_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
-ALTER TABLE employees ADD CONSTRAINT fk_employees_flight_roles FOREIGN KEY (flight_role_id) REFERENCES flight_roles (flight_role_id);
 ALTER TABLE tickets ADD CONSTRAINT fk_tickets_payment_types FOREIGN KEY (payment_type_id) REFERENCES payment_types (payment_type_id);
 
+ALTER TABLE flights_employees ADD CONSTRAINT fk_flights_employees_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
+ALTER TABLE flights_employees ADD CONSTRAINT fk_flights_employees_flights FOREIGN KEY (flight_id) REFERENCES flights (flight_id);
+
+ALTER TABLE routes_cabin_types ADD CONSTRAINT fk_routes_cabin_type_routes FOREIGN KEY (route_id) REFERENCES routes (route_id);
+ALTER TABLE routes_cabin_types ADD CONSTRAINT fk_routes_cabin_type_cabin_types FOREIGN KEY (cabin_type_id) REFERENCES cabin_types (cabin_type_id);
+
+ALTER TABLE employees_job_positions ADD CONSTRAINT fk_employees_job_positions_job_positions FOREIGN KEY (job_position_id) REFERENCES job_positions (job_position_id);
+ALTER TABLE employees_job_positions ADD CONSTRAINT fk_employees_job_positions_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
+
+ALTER TABLE routes ADD CONSTRAINT fk_routes_cities_states_origin FOREIGN KEY (city_state_id_origin) REFERENCES cities_states (city_state_id);
+ALTER TABLE routes ADD CONSTRAINT fk_routes_cities_states_destination FOREIGN KEY (city_state_id_destination) REFERENCES cities_states (city_state_id);
+ALTER TABLE routes ADD CONSTRAINT fk_routes_weekdays FOREIGN KEY (weekday_id) REFERENCES weekdays (weekday_id);
+
+ALTER TABLE cities_states ADD CONSTRAINT fk_cities_states_states FOREIGN KEY (state_id) REFERENCES states (state_id);
+
+ALTER TABLE employees ADD CONSTRAINT fk_employees_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
+ALTER TABLE employees ADD CONSTRAINT fk_employees_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
+ALTER TABLE employees ADD CONSTRAINT fk_employees_flight_roles FOREIGN KEY (flight_role_id) REFERENCES flight_roles (flight_role_id);
+
+ALTER TABLE customers ADD CONSTRAINT fk_customers_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
+ALTER TABLE customers ADD CONSTRAINT fk_customers_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
+
+ALTER TABLE locations ADD CONSTRAINT fk_locations_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
+ALTER TABLE locations ADD CONSTRAINT fk_locations_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
+ALTER TABLE locations ADD CONSTRAINT fk_locations_location_types FOREIGN KEY (location_type_id) REFERENCES location_types (location_type_id);
+
+ALTER TABLE zipcodes ADD CONSTRAINT fk_zipcodes_states FOREIGN KEY (state_id) REFERENCES states (state_id);
