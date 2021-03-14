@@ -10,7 +10,6 @@ IF OBJECT_ID('discounts') IS NOT NULL DROP TABLE discounts;
 IF OBJECT_ID('location_types') IS NOT NULL DROP TABLE location_types;
 IF OBJECT_ID('employees_job_positions') IS NOT NULL DROP TABLE employees_job_positions;
 IF OBJECT_ID('payment_types') IS NOT NULL DROP TABLE payment_types;
-IF OBJECT_ID('flights_roles') IS NOT NULL DROP TABLE flights_roles;
 IF OBJECT_ID('employees') IS NOT NULL DROP TABLE employees;
 IF OBJECT_ID('cabin_types') IS NOT NULL DROP TABLE cabin_types;
 IF OBJECT_ID('flights') IS NOT NULL DROP TABLE flights;
@@ -21,6 +20,7 @@ IF OBJECT_ID('cities_states') IS NOT NULL DROP TABLE cities_states;
 IF OBJECT_ID('weekdays') IS NOT NULL DROP TABLE weekdays;
 IF OBJECT_ID('zipcodes') IS NOT NULL DROP TABLE zipcodes;
 IF OBJECT_ID('states') IS NOT NULL DROP TABLE states;
+IF OBJECT_ID('flights_roles') IS NOT NULL DROP TABLE flights_roles;
 
 
  
@@ -299,7 +299,7 @@ ALTER TABLE cities_states ADD CONSTRAINT fk_cities_states_states FOREIGN KEY (st
 
 ALTER TABLE employees ADD CONSTRAINT fk_employees_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
 ALTER TABLE employees ADD CONSTRAINT fk_employees_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
-ALTER TABLE employees ADD CONSTRAINT fk_employees_flight_roles FOREIGN KEY (flight_role_id) REFERENCES flights_roles (flight_role_id);
+ALTER TABLE employees ADD CONSTRAINT fk_employees_flights_roles FOREIGN KEY (flight_role_id) REFERENCES flights_roles (flight_role_id);
 
 ALTER TABLE customers ADD CONSTRAINT fk_customers_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
 ALTER TABLE customers ADD CONSTRAINT fk_customers_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
