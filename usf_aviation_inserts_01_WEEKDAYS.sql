@@ -1,7 +1,5 @@
 --INSERT TABLE [weekdays]
 
-USE [aviation]
-GO
 INSERT [dbo].[weekdays] ([weekday_id], [name], [day_order]) VALUES (1, N'Monday', 1)
 GO
 INSERT [dbo].[weekdays] ([weekday_id], [name], [day_order]) VALUES (2, N'Tuesday', 2)
