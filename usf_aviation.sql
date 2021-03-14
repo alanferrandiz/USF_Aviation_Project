@@ -299,7 +299,7 @@ ALTER TABLE cities_states ADD CONSTRAINT fk_cities_states_states FOREIGN KEY (st
 
 ALTER TABLE employees ADD CONSTRAINT fk_employees_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
 ALTER TABLE employees ADD CONSTRAINT fk_employees_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
-ALTER TABLE employees ADD CONSTRAINT fk_employees_flight_roles FOREIGN KEY (flight_role_id) REFERENCES flight_roles (flight_role_id);
+ALTER TABLE employees ADD CONSTRAINT fk_employees_flight_roles FOREIGN KEY (flight_role_id) REFERENCES flights_roles (flight_role_id);
 
 ALTER TABLE customers ADD CONSTRAINT fk_customers_cities_states FOREIGN KEY (city_state_id) REFERENCES cities_states (city_state_id);
 ALTER TABLE customers ADD CONSTRAINT fk_customers_zipcodes FOREIGN KEY (zipcode_id) REFERENCES zipcodes (zipcode_id);
