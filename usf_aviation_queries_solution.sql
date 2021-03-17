@@ -1,4 +1,6 @@
---1) In how many flights, planes departed with more than half of their full capacity in passengers in 2016?
+/*
+1) In how many flights, planes departed with more than half of their full capacity in passengers in 2016?
+*/
 
 select fl.flight_id, count(*) cantidad, pl.capacity
 from	tickets ti join 
@@ -9,99 +11,100 @@ group by fl.flight_id, pl.capacity
 having count(*) >  (pl.capacity/2)
 order by cantidad desc
 
---2) In how many flights, planes departed with more women than men in 2016?
+/*
+2) In how many flights, planes departed with less than 25% of their full capacity in passengers in 2017?
+*/
 
-select	fl.flight_id, 
-		count(*) cantidad
-from	customers cu join 
-		tickets ti on cu.customer_id = ti.customer_id join 
+select fl.flight_id, count(*) cantidad, pl.capacity
+from	tickets ti join 
 		flights fl on fl.flight_id = ti.flight_id join
 		planes pl on pl.plane_id = fl.plane_id
-where year(fl.date) = 2016
-group by fl.flight_id
-order by fl.flight_id desc
+where year(fl.date) = 2017
+group by fl.flight_id, pl.capacity
+having count(*) <  (pl.capacity/4)
+order by cantidad desc
 
+/*
+3) Which route of flights generated the most and the least revenue in 2016?
+*/
+declare @table table (route_id int, [year] int, min_revenue decimal(10,2), max_revenue decimal(10,2), flights int) 
+insert into @table
+select	top 1 ro.route_id,
+		year(fl.date) year,
+		0 min_revenue,
+		sum(ti.final_price) max_revenue,
+		count(fl.flight_id) flights
+from	tickets ti join
+		flights fl on fl.flight_id = ti.flight_id join
+		routes ro on ro.route_id = fl.route_id
+where	year(fl.date) = 2016
+group by fl.flight_id, ro.route_id, year(fl.date)
+order by max_revenue desc
 
---3) In how many travels, trains departed with customers only using passes in 2016?
+insert into @table
+select	top 1 ro.route_id,
+		year(fl.date) year,
+		sum(ti.final_price) min_revenue,
+		0 max_revenue,
+		count(fl.flight_id) flights
+from	tickets ti join
+		flights fl on fl.flight_id = ti.flight_id join
+		routes ro on ro.route_id = fl.route_id
+where	year(fl.date) = 2016
+group by fl.flight_id, ro.route_id, year(fl.date)
+order by min_revenue asc
 
-select *
-from travels tr
-where year(date) = 2016 
-and travel_id 
-not in 
+select * from @table
+
+/*
+4) The database does not contain any discounts since these were create after, but the managers want to know how much less money 
+they would have made if they would have applied the discounts rates in the discounts table, having into 
+account that:
+4.1 The Elderly Discount applies to all the customers who, at the moment they purchase the ticket, are
+at least 65 years old
+4.2 The Student Discount applies to all the customers who, at the moment they purchase the ticket, are 
+between 16 and 23 years old
+*/
+--4.1
+go
+select count(*) 'Student Discount count', sum(total_discount) total_discount
+from
 (
-	select distinct travel_id from tickets where year(boarding_date) = 2016 
-)
-and travel_id 
-in 
+	select (final_price * (select percentage from discounts where name = 'Student Discount')) total_discount
+	from tickets ti
+	where customer_id in  
+	(select customer_id from customers where datediff(year,birth_date,ti.purchase_date) between 16 and 23)
+) a
+go
+
+--4.2
+select count(*) 'Elderly Discount count', sum(total_discount) total_discount
+from
 (
-	select distinct travel_id from passes_travels where year(boarding_date) = 2016 
-)
+	select (final_price * (select percentage from discounts where name = 'Elderly Discount')) total_discount
+	from tickets ti
+	where customer_id in  
+	(select customer_id from customers where datediff(year,birth_date,ti.purchase_date) >= 65)
+) a
+go
 
-
---4) In how many travels, trains departed with customers only using passes in 2017?
-
-select *
-from travels tr
-where year(date) = 2017
-and travel_id 
-not in 
-(
-	select distinct travel_id from tickets where year(boarding_date) = 2017 
-)
-and travel_id 
-in 
-(
-	select distinct travel_id from passes_travels where year(boarding_date) = 2017 
-)
-
---5) In how many travels, trains departed with customers using both passes and tickets in 2016?
-
-select 2016 year, *
-from travels tr
-where year(date) = 2016 
-and travel_id 
-in 
-(
-	select distinct travel_id from tickets where year(boarding_date) = 2016 
-)
-and travel_id 
-in 
-(
-	select distinct travel_id from passes_travels where year(boarding_date) = 2016 
-)
-
---6) In how many travels, trains departed with customers using both passes and tickets in 2017?
-
-select 2017 year, *
-from travels tr
-where year(date) = 2017
-and travel_id 
-in 
-(
-	select distinct travel_id from tickets where year(boarding_date) = 2017 
-)
-and travel_id 
-in 
-(
-	select distinct travel_id from passes_travels where year(boarding_date) = 2017 
-)
-
-
---7) Estimate the monthly average ratio of customers using tickets/passes in 2016.
-
-select	2016 year,	(	convert(decimal(10,2),(select count(*) from tickets where year(boarding_date) = 2016))
+/*
+5) Estimate the monthly average ratio of tickets of registered passengers over not registered passengers 
+in years 2016 and 2017.
+*/
+select	2016 year,	(	convert(decimal(10,2),(select count(*) from tickets where customer_id is not null /*and year(boarding_date) = 2016*/))
 							/
-						convert(decimal(10,2),(select count(*) from passes_travels where year(boarding_date) = 2016))) as 'ratio' 
-
---8) Estimate the monthly average ratio of customers using tickets/passes in 2017.
-
-select	2017 year,	(	convert(decimal(10,2),(select count(*) from tickets where year(boarding_date) = 2017))
+						convert(decimal(10,2),(select count(*) from tickets where customer_id is null /*and year(boarding_date) = 2016*/))) as 'ratio' 
+union
+select	2017 year,	(	convert(decimal(10,2),(select count(*) from tickets where customer_id is not null and year(boarding_date) = 2017))
 							/
-						convert(decimal(10,2),(select count(*) from passes_travels where year(boarding_date) = 2017))) as 'ratio' 
+						convert(decimal(10,2),(select count(*) from tickets where customer_id is null and year(boarding_date) = 2017))) as 'ratio' 
 
 
---10) For trains going from Tampa to Orlando, for each weekday, what is the most demanded hour in terms of number of customers?
+/*
+6) For routes going from Tampa to Orlando, for each weekday, what is the most demanded route in terms of number 
+of customers?
+*/
 
 select	row_number() over (order by sum(total) desc) orden,
 		start_time_actual, 
@@ -112,36 +115,24 @@ from
 	select start_time_actual, city_state, sum(total) total
 	from
 	(
-		select	tr.travel_id, 
+		select	fl.flight_id, 
 				start_time_actual, 
-				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) city_state, 
+				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) city_state, 
 				count(*) total
-		from travels tr join tickets ti
-		on tr.travel_id = ti.travel_id
-		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) = 'Tampa'
-		group by tr.travel_id, route_id, start_time_actual
-	) a
-	group by start_time_actual, city_state
-	union
-	select start_time_actual, city_state, sum(total) total
-	from
-	(
-		select	tr.travel_id, 
-				start_time_actual, 
-				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) city_state, 
-				count(*) total
-		from travels tr join passes_travels pt
-		on tr.travel_id = pt.travel_id
-		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) = 'Tampa'
-		group by tr.travel_id, route_id, start_time_actual
+		from flights fl join tickets ti
+		on fl.flight_id = ti.flight_id
+		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) = 'Tampa'
+		group by fl.flight_id, route_id, start_time_actual
 	) a
 	group by start_time_actual, city_state
 ) b
 group by start_time_actual, city_state
 order by total desc
 
-
---11) For trains going from Orlando to Tampa, for each weekday, what is the most demanded hour in terms of number of customers?
+/*
+7) For routes going from Orlando to Tampa, for each weekday, what is the most demanded hour in terms 
+of number of customers?
+*/
 
 select	row_number() over (order by sum(total) desc) orden,
 		start_time_actual, 
@@ -152,28 +143,14 @@ from
 	select start_time_actual, city_state, sum(total) total
 	from
 	(
-		select	tr.travel_id, 
+		select	fl.flight_id, 
 				start_time_actual, 
-				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) city_state, 
+				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) city_state, 
 				count(*) total
-		from travels tr join tickets ti
-		on tr.travel_id = ti.travel_id
-		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) = 'Orlando'
-		group by tr.travel_id, route_id, start_time_actual
-	) a
-	group by start_time_actual, city_state
-	union
-	select start_time_actual, city_state, sum(total) total
-	from
-	(
-		select	tr.travel_id, 
-				start_time_actual, 
-				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) city_state, 
-				count(*) total
-		from travels tr join passes_travels pt
-		on tr.travel_id = pt.travel_id
-		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = tr.route_id)) = 'Orlando'
-		group by tr.travel_id, route_id, start_time_actual
+		from flights fl join tickets ti
+		on fl.flight_id = ti.flight_id
+		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) = 'Orlando'
+		group by fl.flight_id, route_id, start_time_actual
 	) a
 	group by start_time_actual, city_state
 ) b
@@ -182,112 +159,66 @@ order by total desc
 
 
 
---12) Assuming that 3 wagons are assigned to each train in every travel, and each wagon has a capacity of 60 customers, what percentage of travels justify the usage of 3 wagons in 2016?
-
-
-	select	ROW_NUMBER() over (order by sum(total) desc) orden,
+/*
+8) Knowing that at least 25% of the capacity of the full passenger capacity of the planes is 
+necessary to justify the departure of the flight, the managers would like to know which flights 
+should not have departed in the year 2017?
+*/
+	select	ROW_NUMBER() over (order by sum(tickets) desc) orden,
 			year,
-			travel_id, 
-			sum(tickets) tickets, 
-			sum(passes) passes, 
-			sum(total) total,
-			case when sum(total) > 100 then 'YES' else 'NO' end as 'justify'
+			flight_id, 
+			sum(tickets) tickets,
+			case when sum(tickets) > (select capacity * .25 from planes where plane_id = a.plane_id) then 'YES' else 'NO' end as 'justify'
 	from
 	(
 		select	year(date)	 year, 
-				tr.travel_id, 
-				count(*)	tickets,
-				0			passes,
-				count(*)	total
-		from travels tr join tickets ti
-		on tr.travel_id = ti.travel_id
-		where year(date) = 2016
-		group by tr.travel_id, year(date)
-		union
-		select	year(date)  year,
-				tr.travel_id, 
-				0			tickets,
-				count(*)	passes,
-				count(*)	total
-		from travels tr join passes_travels pt
-		on tr.travel_id = pt.travel_id
-		where year(date) = 2016
-		group by tr.travel_id, year(date)
+				fl.flight_id,
+				fl.plane_id,
+				count(*)	tickets
+		from flights fl join tickets ti
+		on fl.flight_id = ti.flight_id
+		where year(date) = 2017
+		group by fl.flight_id, fl.plane_id, year(date)
 	) a
-	group by travel_id, year
+	group by flight_id, plane_id, year
 	order by orden asc
-	
---12) Assuming that 3 wagons are assigned to each train in every travel, and each wagon has a capacity of 60 customers, what percentage of travels justify the usage of 3 wagons in 2017?
 
-	select	ROW_NUMBER() over (order by sum(total) desc) orden,
-			year,
-			travel_id, 
-			sum(tickets) tickets, 
-			sum(passes) passes, 
-			sum(total) total,
-			case when sum(total) > 100 then 'YES' else 'NO' end as 'justify'
-	from
-	(
-		select	year(date)	 year, 
-				tr.travel_id, 
-				count(*)	tickets,
-				0			passes,
-				count(*)	total
-		from travels tr join tickets ti
-		on tr.travel_id = ti.travel_id
-		where year(date) = 2017
-		group by tr.travel_id, year(date)
-		union
-		select	year(date)  year,
-				tr.travel_id, 
-				0			tickets,
-				count(*)	passes,
-				count(*)	total
-		from travels tr join passes_travels pt
-		on tr.travel_id = pt.travel_id
-		where year(date) = 2017
-		group by tr.travel_id, year(date)
-	) a
-	group by travel_id, year
-	order by orden asc
+
+
+
+
+
+
+
+
 
 
 
 --13) Assuming that 3 wagons are assigned to each train in every travel, what is the lowest and highest monthly utilization of the wagons in 2016? In what months?(in terms of seats occupied)
 
-	select	ROW_NUMBER() over (order by sum(total) desc) orden,
+	select	ROW_NUMBER() over (order by sum(tickets) desc) orden,
 			year,
 			month, 
-			sum(tickets) tickets, 
-			sum(passes) passes, 
-			sum(total) total,
-			case	when ROW_NUMBER() over (order by sum(total) desc) = 1 then 'HIGHEST' 
-					when ROW_NUMBER() over (order by sum(total) desc) = 12 then 'LOWEST'
+			sum(tickets) tickets,
+			case	when ROW_NUMBER() over (order by sum(tickets) desc) = 1 then 'HIGHEST' 
+					when ROW_NUMBER() over (order by sum(tickets) desc) = 12 then 'LOWEST'
 					end as 'position'
 	from
 	(
 		select	year(date)  year,
 				right(convert(varchar(50), 100 + month(date)),2) +' - ' +  datename(month,date) month, 
-				count(*)	tickets,
-				0			passes,
-				count(*)	total
-		from travels tr join tickets ti
-		on tr.travel_id = ti.travel_id
-		where year(date) = 2016
-		group by year(date), right(convert(varchar(50), 100 + month(date)),2) +' - ' +  datename(month,date) 
-		union
-		select	year(date)  year,
-				right(convert(varchar(50), 100 + month(date)),2) +' - ' +  datename(month,date) month, 
-				0			tickets,
-				count(*)	passes,
-				count(*)	total
-		from travels tr join passes_travels pt
-		on tr.travel_id = pt.travel_id
-		where year(date) = 2016
+				count(*)	tickets
+		from flights fl join tickets ti
+		on fl.flight_id = ti.flight_id
+		where year(date) = 2017
 		group by year(date), right(convert(varchar(50), 100 + month(date)),2) +' - ' +  datename(month,date) 
 	) a
 	group by year, month
 	order by orden asc
+
+
+
+
 
 --14) Assuming that 3 wagons are assigned to each train in every travel, what is the lowest and highest monthly utilization of the wagons in 2017? In what months?(in terms of seats occupied)
 
