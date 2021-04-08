@@ -40,7 +40,7 @@ from	tickets ti join
 		flights fl on fl.flight_id = ti.flight_id join
 		routes ro on ro.route_id = fl.route_id
 where	year(fl.date) = 2017
-group by fl.flight_id, ro.route_id, year(fl.date)
+group by ro.route_id, year(fl.date)
 order by max_revenue desc
 
 insert into @table
@@ -52,8 +52,8 @@ select	top 1 ro.route_id,
 from	tickets ti join
 		flights fl on fl.flight_id = ti.flight_id join
 		routes ro on ro.route_id = fl.route_id
-where	year(fl.date) = 2016
-group by fl.flight_id, ro.route_id, year(fl.date)
+where	year(fl.date) = 2017
+group by ro.route_id, year(fl.date)
 order by min_revenue asc
 
 select * from @table
@@ -108,56 +108,98 @@ select	2017 year,	(	convert(decimal(10,2),(select count(*) from tickets where cu
 number of sold tickets?
 */
 
-select	row_number() over (order by sum(total) desc) orden,
-		start_time_actual, 
+select	position,
+		route_id, 
+		weekday_id,
+		weekday_name,
 		city_state,
-		sum(total) total
+		total_tickets
 from
 (
-	select start_time_actual, city_state, sum(total) total
-	from
-	(
-		select	fl.flight_id, 
-				start_time_actual, 
-				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) city_state, 
-				count(*) total
-		from flights fl join tickets ti
-		on fl.flight_id = ti.flight_id
-		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) = 'Tampa'
-		group by fl.flight_id, route_id, start_time_actual
-	) a
-	group by start_time_actual, city_state
-) b
-group by start_time_actual, city_state
-order by total desc
+		select	row_number() over (partition by weekday_id order by sum(total) desc) position,
+				route_id, 
+				weekday_id,
+				weekday_name,
+				city_state,
+				sum(total) total_tickets
+		from
+		(
+			select route_id, weekday_id, weekday_name, city_state, sum(total) total
+			from
+			(
+				select	fl.route_id, 
+						wd.weekday_id,
+						wd.name weekday_name,
+						(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) city_state, 
+						count(*) total
+				from	flights fl join 
+						tickets ti on fl.flight_id = ti.flight_id join
+						routes ro on ro.route_id = fl.route_id join
+						weekdays wd on wd.weekday_id = ro.weekday_id
+				where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) = 'Tampa'
+				group by fl.route_id, wd.weekday_id, wd.name
+			) a
+			group by route_id, weekday_id, weekday_name, city_state
+		) b
+		group by route_id, weekday_id, weekday_name, city_state
+) c
+where position = 1
+group by	position,
+			route_id, 
+			weekday_id,
+			weekday_name,
+			city_state,
+			total_tickets
+order by weekday_id asc
 
 /*
 7) For routes going from Orlando to Tampa, for each weekday, what is the most demanded hour in terms 
 of number of sold tickets?
 */
 
-select	row_number() over (order by sum(total) desc) orden,
+select	position,
 		start_time_actual, 
+		weekday_id,
+		weekday_name,
 		city_state,
-		sum(total) total
+		total_tickets
 from
 (
-	select start_time_actual, city_state, sum(total) total
-	from
-	(
-		select	fl.flight_id, 
+		select	row_number() over (partition by weekday_id order by sum(total) desc) position,
 				start_time_actual, 
-				(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) city_state, 
-				count(*) total
-		from flights fl join tickets ti
-		on fl.flight_id = ti.flight_id
-		where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) = 'Orlando'
-		group by fl.flight_id, route_id, start_time_actual
-	) a
-	group by start_time_actual, city_state
-) b
-group by start_time_actual, city_state
-order by total desc
+				weekday_id,
+				weekday_name,
+				city_state,
+				sum(total) total_tickets
+		from
+		(
+			select start_time_actual, weekday_id, weekday_name, city_state, sum(total) total
+			from
+			(
+				select	fl.start_time_actual, 
+						wd.weekday_id,
+						wd.name weekday_name,
+						(select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) city_state, 
+						count(*) total
+				from	flights fl join 
+						tickets ti on fl.flight_id = ti.flight_id join
+						routes ro on ro.route_id = fl.route_id join
+						weekdays wd on wd.weekday_id = ro.weekday_id
+				where ( select name from cities_states where city_state_id = (select city_state_id_origin from routes where route_id = fl.route_id)) = 'Orlando'
+				group by fl.start_time_actual, fl.route_id, wd.weekday_id, wd.name
+			) a
+			group by start_time_actual, weekday_id, weekday_name, city_state
+		) b
+		group by start_time_actual, weekday_id, weekday_name, city_state
+) c
+where position = 1
+group by	position,
+			start_time_actual, 
+			weekday_id,
+			weekday_name,
+			city_state,
+			total_tickets
+order by weekday_id asc
 
 
 
